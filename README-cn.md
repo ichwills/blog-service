@@ -47,3 +47,12 @@ WithFields：设置日志公共字段。
 WithContext：设置日志上下文属性。
 WithCaller：设置当前某一层调用栈的信息（程序计数器、文件信息、行号）。
 WithCallersFrames：设置当前的整个调用栈信息。
+##模块开发
+Model：指定运行 DB 操作的模型实例，默认解析该结构体的名字为表名，格式为大写驼峰转小写下划线驼峰。若情况特殊，也可以编写该结构体的 TableName 方法用于指定其对应返回的表名。
+Where：设置筛选条件，接受 map，struct 或 string 作为条件。
+Offset：偏移量，用于指定开始返回记录之前要跳过的记录数。
+Limit：限制检索的记录数。
+Find：查找符合筛选条件的记录。
+Updates：更新所选字段。
+Delete：删除数据。
+Count：统计行为，用于统计模型的记录数。
