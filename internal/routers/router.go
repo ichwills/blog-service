@@ -2,17 +2,41 @@ package routers
 
 import (
 	_ "Pro/blog-service/docs"
+	"Pro/blog-service/global"
 	"Pro/blog-service/internal/middleware"
 	"Pro/blog-service/internal/routers/api"
 	v1 "Pro/blog-service/internal/routers/api/v1"
+	"Pro/blog-service/pkg/limiter"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
+var methodLimiters = limiter.NewMethodLimiter().AddBuckets(
+	limiter.LimiterBucketRule{
+		Key:          "/auth",
+		FillInterval: time.Second,
+		Capacity:     10,
+		Quantum:      10,
+	},
+)
+
 func NewRouter() *gin.Engine {
 	r := gin.Default()
+
+	if global.ServerSetting.RunMode == "debug" {
+		r.Use(gin.Logger())
+		r.Use(gin.Recovery())
+	} else {
+		r.Use(middleware.AccessLog())
+		r.Use(middleware.Recovery())
+	}
+	r.Use(middleware.RateLimiter(methodLimiters))
+	r.Use(middleware.ContextTimeout(60 * time.Second))
+	r.Use(middleware.Translations())
+
 	article := v1.NewArticle()
 	tag := v1.NewTag()
 	r.Use(middleware.Translations())
@@ -25,7 +49,7 @@ func NewRouter() *gin.Engine {
 	r.POST("/upload/file", upload.UploadFile)
 	r.POST("auth", api.GetAuth)
 	apiv1 := r.Group("/api/v1")
-	apiv1.Use() // middleware.JWT()
+	apiv1.Use(middleware.JWT()) //
 	{
 		// 创建标签
 		apiv1.POST("/tags", tag.Create)
